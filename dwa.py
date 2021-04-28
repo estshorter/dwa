@@ -1,8 +1,7 @@
 import numpy as np
-from scipy.integrate._ivp.ivp import solve_ivp
+from scipy.integrate import solve_ivp
 
 from animation import Animation_robot
-
 
 # def min_max_normalize(data):
 #     data = np.array(data)
@@ -167,6 +166,14 @@ class DWA:
         self.weight_vel = 0.2
         self.weight_obs = 0.1
 
+        # 近傍とみなす距離
+        area_dis_to_obs = 5
+        self.area_dis_to_obs_sqrd = area_dis_to_obs ** 2
+
+        # スコアの最大値
+        score_obstacle = 2
+        self.score_obstacle_sqrd = score_obstacle ** 2
+
         self.traj_paths = []
         self.traj_opt = []
 
@@ -259,29 +266,25 @@ class DWA:
         return path.u_v
 
     def _calc_neighbor_obs(self, state, obstacles):
-        area_dis_to_obs = 5
         neighbor_obs = []
 
         for obs in obstacles:
-            temp_dis_to_obs = np.sqrt((state.x - obs.x) ** 2 + (state.y - obs.y) ** 2)
-            if temp_dis_to_obs < area_dis_to_obs:
+            temp_dis_to_obs = (state.x - obs.x) ** 2 + (state.y - obs.y) ** 2
+            if temp_dis_to_obs < self.area_dis_to_obs_sqrd:
                 neighbor_obs.append(obs)
         return neighbor_obs
 
     def _obstacle(self, path, neighbor_obs):
-        # スコアの最大値
-        score_obstacle = 2
-
+        score_obstacle_sqrd = self.score_obstacle_sqrd
         for (path_x, path_y) in zip(path.xs, path.ys):
             for obs in neighbor_obs:
-                temp_dis_to_obs = np.sqrt((path_x - obs.x) ** 2 + (path_y - obs.y) ** 2)
-                if temp_dis_to_obs < score_obstacle:
-                    score_obstacle = temp_dis_to_obs
+                temp_dis_to_obs = (path_x - obs.x) ** 2 + (path_y - obs.y) ** 2
+                if temp_dis_to_obs < score_obstacle_sqrd:
+                    score_obstacle_sqrd = temp_dis_to_obs
                 if temp_dis_to_obs < obs.size + 0.75:  # マージン
-                    score_obstacle = -float("inf")
-                    break
+                    return -float("inf")
 
-        return score_obstacle
+        return np.sqrt(score_obstacle_sqrd)
 
 
 class MainController:
