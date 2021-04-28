@@ -122,10 +122,15 @@ class Animation_robot:
         # ステップ数表示
         self.step_text = self.axis.set_title("")
 
-        _ = ani.FuncAnimation(
+        anim = ani.FuncAnimation(
             self.fig, self._update_anim, interval=100, frames=len(traj_g_x)
         )
-        plt.show()
+
+        save_to_video = False
+        if save_to_video:
+            anim.save("dwa.mp4", writer="ffmpeg")
+        else:
+            plt.show()
 
     def _update_anim(self, i):
         self.traj_img.set_data(self.traj_x[: i + 1], self.traj_y[: i + 1])
