@@ -164,3 +164,4 @@ Thumbs.db
 
 # End of https://www.toptal.com/developers/gitignore/api/python,visualstudiocode
 *.mp4
+*.gif

@@ -128,7 +128,7 @@ class Animation_robot:
 
         save_to_video = False
         if save_to_video:
-            anim.save("dwa.mp4", writer="ffmpeg")
+            anim.save("dwa.gif", writer="imagemagick")
         else:
             plt.show()
 
