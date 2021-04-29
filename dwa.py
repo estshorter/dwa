@@ -3,13 +3,15 @@ from scipy.integrate import solve_ivp
 
 from animation import Animation_robot
 
+
 # def min_max_normalize(data):
 #     data = np.array(data)
 #     max_val = data.max()
 #     min_val = data.min()
 
 #     diff = max_val - min_val
-#     if abs(diff) < 1e-7:
+#     eps = 1e-7
+#     if abs(diff) < eps:
 #         data = np.zeros(len(data))
 #     else:
 #         data = (data - min_val) / diff
@@ -225,29 +227,28 @@ class DWA:
         score_obstacles = []
 
         for path in paths:
-            score_heading_angles.append(self._heading_angle(path, g_x, g_y))
-            score_heading_vels.append(self._heading_vel(path))
-            score_obstacles.append(self._obstacle(path, neighbor_obs))
+            score_obs = self._calc_obstacles_score(path, neighbor_obs)
+            if score_obs == -float("inf"):
+                continue
+            score_heading_angles.append(self._calc_heading_angle_score(path, g_x, g_y))
+            score_heading_vels.append(self._calc_heading_vel_score(path))
+            score_obstacles.append(score_obs)
 
-        # このやり方だと正規化が反映されないようなのでコメントアウトしておく
-        # for scores in [score_heading_angles, score_heading_vels, score_obstacles]:
-        #     scores = min_max_normalize(scores)
+        if len(score_heading_angles) == 0:
+            raise RuntimeError("All paths cannot avoid obstacles")
 
-        score = 0.0
-        for k in range(len(paths)):
-            temp_score = (
-                self.weight_angle * score_heading_angles[k]
-                + self.weight_vel * score_heading_vels[k]
-                + self.weight_obs * score_obstacles[k]
-            )
+        score_heading_angles_np = np.array(score_heading_angles)
+        score_heading_vels_np = np.array(score_heading_vels)
+        score_obstacles_np = np.array(score_obstacles)
 
-            if temp_score > score:
-                opt_path = paths[k]
-                score = temp_score
+        scores = (
+            self.weight_angle * score_heading_angles_np
+            + self.weight_vel * score_heading_vels_np
+            + self.weight_obs * score_obstacles_np
+        )
+        return paths[scores.argmax()]
 
-        return opt_path
-
-    def _heading_angle(self, path, g_x, g_y):
+    def _calc_heading_angle_score(self, path, g_x, g_y):
         last_x = path.xs[-1]
         last_y = path.ys[-1]
         last_th = path.ths[-1]
@@ -262,7 +263,7 @@ class DWA:
 
         return score_angle
 
-    def _heading_vel(self, path):
+    def _calc_heading_vel_score(self, path):
         return path.u_v
 
     def _calc_neighbor_obs(self, state, obstacles):
@@ -274,7 +275,7 @@ class DWA:
                 neighbor_obs.append(obs)
         return neighbor_obs
 
-    def _obstacle(self, path, neighbor_obs):
+    def _calc_obstacles_score(self, path, neighbor_obs):
         score_obstacle_sqrd = self.score_obstacle_sqrd
         for (path_x, path_y) in zip(path.xs, path.ys):
             for obs in neighbor_obs:
@@ -291,15 +292,15 @@ class MainController:
     def __init__(self) -> None:
         self.samplingtime = 0.1
 
-        self.robot = TwoWheeledRobot(0.0, 0.0, np.pi / 8)
+        self.robot = TwoWheeledRobot(0.0, 0.0, 0)
         self.goal_maker = ConstGoal()
         self.planner = DWA(self.samplingtime)
 
         self.obstacles = [
             Obstacle(4, 1, 0.25),
             Obstacle(0, 4.5, 0.25),
-            Obstacle(3, 4.5, 0.25),
-            Obstacle(5, 3.5, 0.25),
+            # Obstacle(3, 4.5, 0.25),
+            # Obstacle(5, 3.5, 0.25),
             Obstacle(7.5, 9.0, 0.25),
         ]
         # self.obstacles = []
