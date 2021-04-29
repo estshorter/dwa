@@ -237,6 +237,7 @@ class DWA:
         if len(score_heading_angles) == 0:
             raise RuntimeError("All paths cannot avoid obstacles")
 
+        # パラメータチューニングがうまくいかなかったため、正規化していない
         score_heading_angles_np = np.array(score_heading_angles)
         score_heading_vels_np = np.array(score_heading_vels)
         score_obstacles_np = np.array(score_obstacles)
