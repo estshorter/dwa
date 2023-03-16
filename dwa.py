@@ -3,7 +3,6 @@ from scipy.integrate import solve_ivp
 
 from animation import Animation_robot
 
-
 # def min_max_normalize(data):
 #     data = np.array(data)
 #     max_val = data.max()
@@ -170,11 +169,11 @@ class DWA:
 
         # 近傍とみなす距離
         area_dis_to_obs = 5
-        self.area_dis_to_obs_sqrd = area_dis_to_obs ** 2
+        self.area_dis_to_obs_sqrd = area_dis_to_obs**2
 
         # スコアの最大値
         score_obstacle = 2
-        self.score_obstacle_sqrd = score_obstacle ** 2
+        self.score_obstacle_sqrd = score_obstacle**2
 
         self.traj_paths = []
         self.traj_opt = []
@@ -314,7 +313,7 @@ class MainController:
     def run(self):
         time_step = 0
         goal_th = 0.5
-        goal_th_sqrd = goal_th ** 2
+        goal_th_sqrd = goal_th**2
         max_timestep = 500
 
         while True:
